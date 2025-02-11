@@ -1,5 +1,6 @@
 ﻿using GpsUtil.Location;
 using Microsoft.AspNetCore.Mvc;
+using TourGuide.LibrairiesWrappers.Interfaces;
 using TourGuide.Services.Interfaces;
 using TourGuide.Users;
 using TripPricer;
@@ -10,11 +11,16 @@ namespace TourGuide.Controllers;
 [Route("[controller]")]
 public class TourGuideController : ControllerBase
 {
-    private readonly ITourGuideService _tourGuideService;
 
-    public TourGuideController(ITourGuideService tourGuideService)
+    //Ajout de _rewardsService et _gpsUtil dans le constructeur du controller
+    private readonly ITourGuideService _tourGuideService;
+    private readonly IRewardsService _rewardsService;
+    private readonly IGpsUtil _gpsUtil;
+    public TourGuideController(ITourGuideService tourGuideService, IGpsUtil gpsUtil, IRewardsService rewardsService)
     {
         _tourGuideService = tourGuideService;
+        _gpsUtil = gpsUtil;
+        _rewardsService = rewardsService;
     }
 
     [HttpGet("getLocation")]
@@ -34,12 +40,38 @@ public class TourGuideController : ControllerBase
     // The reward points for visiting each Attraction.
     //    Note: Attraction reward points can be gathered from RewardsCentral
     [HttpGet("getNearbyAttractions")]
-    public ActionResult<List<Attraction>> GetNearbyAttractions([FromQuery] string userName)
+    public ActionResult<List<NearbyAttractionDto>> GetNearbyAttractions([FromQuery] string userName)
     {
-        var visitedLocation = _tourGuideService.GetUserLocation(GetUser(userName));
-        var attractions = _tourGuideService.GetNearByAttractions(visitedLocation);
-        return Ok(attractions);
+        // Récupère l'utilisateur via une méthode existante (GetUser)
+        var user = GetUser(userName);
+        // Récupère la dernière localisation connue de l'utilisateur
+        var visitedLocation = _tourGuideService.GetUserLocation(user);
+
+        var allAttractions = _gpsUtil.GetAttractions();
+
+        // Pour chaque attraction, on calcule la distance entre la localisation de l'utilisateur et l'attraction.
+        // Puis on trie par distance croissante et on prend les cinq premières.
+        var closestAttractions = _tourGuideService.GetNearByAttractions(visitedLocation);
+
+        // Pour chaque attraction sélectionnée, on crée un DTO incluant :
+        // - le nom et les coordonnées de l'attraction
+        // - les coordonnées de l'utilisateur
+        // - la distance calculée entre la localisation de l'utilisateur et l'attraction
+        // - les points de récompense pour cette attraction et cet utilisateur
+        var result = closestAttractions.Select(attraction => new NearbyAttractionDto
+        {
+            AttractionName = attraction.AttractionName,
+            AttractionLatitude = attraction.Latitude,
+            AttractionLongitude = attraction.Longitude,
+            UserLatitude = visitedLocation.Location.Latitude,
+            UserLongitude = visitedLocation.Location.Longitude,
+            Distance = _rewardsService.GetDistance(visitedLocation.Location, attraction),
+            RewardPoints = _rewardsService.GetRewardPoints(attraction, user)
+        }).ToList();
+
+        return Ok(result);
     }
+
 
     [HttpGet("getRewards")]
     public ActionResult<List<UserReward>> GetRewards([FromQuery] string userName)

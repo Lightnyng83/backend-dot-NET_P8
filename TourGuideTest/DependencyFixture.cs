@@ -9,6 +9,7 @@ using TourGuide.Services;
 using TourGuide.LibrairiesWrappers;
 using Microsoft.Extensions.Logging;
 using TourGuide.Utilities;
+using TourGuide.Controllers;
 
 namespace TourGuideTest
 {

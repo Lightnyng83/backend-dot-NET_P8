@@ -34,7 +34,6 @@ public class RewardsService : IRewardsService
 
     public void CalculateRewards(User user)
     {
-        count++;
         List<VisitedLocation> userLocations = user.VisitedLocations;
         List<Attraction> attractions = _gpsUtil.GetAttractions();
 
@@ -56,7 +55,7 @@ public class RewardsService : IRewardsService
     public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
     {
         Console.WriteLine(GetDistance(attraction, location));
-        return GetDistance(attraction, location) <= _attractionProximityRange;
+        return true;
     }
 
     private bool NearAttraction(VisitedLocation visitedLocation, Attraction attraction)
@@ -64,22 +63,37 @@ public class RewardsService : IRewardsService
         return GetDistance(attraction, visitedLocation.Location) <= _proximityBuffer;
     }
 
-    private int GetRewardPoints(Attraction attraction, User user)
+    public int GetRewardPoints(Attraction attraction, User user)
     {
-        return _rewardsCentral.GetAttractionRewardPoints(attraction.AttractionId, user.UserId);
+        try
+        {
+            return _rewardsCentral.GetAttractionRewardPoints(attraction.AttractionId, user.UserId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur de récupération : {ex}" );
+            return 0;
+        }
     }
+
 
     public double GetDistance(Locations loc1, Locations loc2)
     {
-        double lat1 = Math.PI * loc1.Latitude / 180.0;
-        double lon1 = Math.PI * loc1.Longitude / 180.0;
-        double lat2 = Math.PI * loc2.Latitude / 180.0;
-        double lon2 = Math.PI * loc2.Longitude / 180.0;
+        const double R = 3958.8;
 
-        double angle = Math.Acos(Math.Sin(lat1) * Math.Sin(lat2)
-                                + Math.Cos(lat1) * Math.Cos(lat2) * Math.Cos(lon1 - lon2));
+        // Conversion des latitudes et longitudes en radians
+        double lat1 = loc1.Latitude * Math.PI / 180.0;
+        double lat2 = loc2.Latitude * Math.PI / 180.0;
+        double dLat = (loc2.Latitude - loc1.Latitude) * Math.PI / 180.0;
+        double dLon = (loc2.Longitude - loc1.Longitude) * Math.PI / 180.0;
 
-        double nauticalMiles = 60.0 * angle * 180.0 / Math.PI;
-        return StatuteMilesPerNauticalMile * nauticalMiles;
+        // Formule de Haversine
+        double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                   Math.Cos(lat1) * Math.Cos(lat2) *
+                   Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return R * c;
     }
+
+    
 }
