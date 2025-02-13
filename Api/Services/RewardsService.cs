@@ -1,4 +1,5 @@
 ﻿using GpsUtil.Location;
+using System.Collections.Concurrent;
 using TourGuide.LibrairiesWrappers.Interfaces;
 using TourGuide.Services.Interfaces;
 using TourGuide.Users;
@@ -13,7 +14,6 @@ public class RewardsService : IRewardsService
     private readonly int _attractionProximityRange = 200;
     private readonly IGpsUtil _gpsUtil;
     private readonly IRewardCentral _rewardsCentral;
-    private static int count = 0;
 
     public RewardsService(IGpsUtil gpsUtil, IRewardCentral rewardCentral)
     {
@@ -32,23 +32,30 @@ public class RewardsService : IRewardsService
         _proximityBuffer = _defaultProximityBuffer;
     }
 
-    public void CalculateRewards(User user)
+    public async Task CalculateRewards(User user)
     {
         List<VisitedLocation> userLocations = user.VisitedLocations;
-        List<Attraction> attractions = _gpsUtil.GetAttractions();
+        List<Attraction> attractions = await _gpsUtil.GetAttractions();
 
-        foreach (var visitedLocation in userLocations)
+        ConcurrentBag<UserReward> rewards = new ConcurrentBag<UserReward>();
+
+        await Parallel.ForEachAsync(userLocations, async (visitedLocation, cancellationToken) =>
         {
             foreach (var attraction in attractions)
             {
-                if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
+                bool alreadyRewarded = rewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName)
+                                       || user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName);
+
+                if (!alreadyRewarded && await NearAttraction(visitedLocation, attraction))
                 {
-                    if (NearAttraction(visitedLocation, attraction))
-                    {
-                        user.AddUserReward(new UserReward(visitedLocation, attraction, GetRewardPoints(attraction, user)));
-                    }
+                    var reward = new UserReward(visitedLocation, attraction, GetRewardPoints(attraction, user));
+                    rewards.Add(reward);
                 }
             }
+        });
+        foreach (var reward in rewards)
+        {
+            user.AddUserReward(reward);
         }
     }
 
@@ -58,9 +65,10 @@ public class RewardsService : IRewardsService
         return true;
     }
 
-    private bool NearAttraction(VisitedLocation visitedLocation, Attraction attraction)
+    private async Task<bool> NearAttraction(VisitedLocation visitedLocation, Attraction attraction)
     {
-        return GetDistance(attraction, visitedLocation.Location) <= _proximityBuffer;
+        double distance = await GetDistance(attraction, visitedLocation.Location);
+        return distance <= _proximityBuffer;
     }
 
     public int GetRewardPoints(Attraction attraction, User user)
@@ -77,7 +85,7 @@ public class RewardsService : IRewardsService
     }
 
 
-    public double GetDistance(Locations loc1, Locations loc2)
+    public async Task<double> GetDistance(Locations loc1, Locations loc2)
     {
         const double R = 3958.8;
 
@@ -85,14 +93,14 @@ public class RewardsService : IRewardsService
         double lat1 = loc1.Latitude * Math.PI / 180.0;
         double lat2 = loc2.Latitude * Math.PI / 180.0;
         double dLat = (loc2.Latitude - loc1.Latitude) * Math.PI / 180.0;
-        double dLon = (loc2.Longitude - loc1.Longitude) * Math.PI / 180.0;
+        double dLon = (loc1.Longitude - loc2.Longitude) * Math.PI / 180.0;
 
         // Formule de Haversine
         double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
                    Math.Cos(lat1) * Math.Cos(lat2) *
                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
         double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-        return R * c;
+        return await Task.FromResult(R * c);
     }
 
     

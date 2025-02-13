@@ -49,9 +49,9 @@ public class TourGuideService : ITourGuideService
         return user.UserRewards;
     }
 
-    public VisitedLocation GetUserLocation(User user)
+    public async  Task<VisitedLocation> GetUserLocation(User user)
     {
-        return user.VisitedLocations.Any() ? user.GetLastVisitedLocation() : TrackUserLocation(user);
+        return user.VisitedLocations.Any() ? user.GetLastVisitedLocation() : await TrackUserLocation(user);
     }
 
     public User GetUser(string userName)
@@ -82,27 +82,28 @@ public class TourGuideService : ITourGuideService
         return providers;
     }
 
-    public VisitedLocation TrackUserLocation(User user)
+    public async Task<VisitedLocation> TrackUserLocation(User user)
     {
         VisitedLocation visitedLocation = _gpsUtil.GetUserLocation(user.UserId);
-        user.AddToVisitedLocations(visitedLocation);
-        _rewardsService.CalculateRewards(user);
+        await user.AddToVisitedLocations(visitedLocation);
+        await _rewardsService.CalculateRewards(user);
         return visitedLocation;
     }
 
-    public List<Attraction> GetNearByAttractions(VisitedLocation visitedLocation)
+    public async Task<List<Attraction>> GetNearByAttractions(VisitedLocation visitedLocation)
     {
-        var allAttractions = _gpsUtil.GetAttractions();
-
-        // Pour chaque attraction, on calcule la distance par rapport à la localisation de l'utilisateur
+        // On attend la récupération asynchrone de la liste des attractions
+        var allAttractions = await _gpsUtil.GetAttractions();
+        // Calcul de la distance pour chaque attraction et tri par ordre croissant
         var sortedAttractions = allAttractions
+            .AsParallel()
             .Select(a => new
             {
                 Attraction = a,
-                Distance = _rewardsService.GetDistance(visitedLocation.Location, a)
+                Distance = _rewardsService.GetDistance(visitedLocation.Location, a).Result
             })
-            .OrderBy(x => x.Distance)      // Trie par distance croissante
-            .Take(5)                       // Prend les 5 premières
+            .OrderBy(x => x.Distance)
+            .Take(5)
             .Select(x => x.Attraction)
             .ToList();
 
