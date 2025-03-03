@@ -1,0 +1,45 @@
+name: TourGuide CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout du code
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # 2. Configuration de l'environnement .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '6.0.x'
+
+      # 3. Restauration des dépendances
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # 4. Compilation de la solution
+      - name: Build solution
+        run: dotnet build --configuration Release --no-restore
+
+      # 5. Exécution des tests unitaires (sans les tests de performance)
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --filter "Category!=Performance" --logger:"trx"
+
+      # 6. Publication du projet (build des artefacts)
+      - name: Publish artifact
+        run: dotnet publish --configuration Release --no-build -o ./publish
+
+      # 7. Upload de l'artefact pour une utilisation ultérieure
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: published-app
+          path: ./publish
