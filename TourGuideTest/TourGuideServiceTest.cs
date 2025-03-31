@@ -16,13 +16,9 @@ namespace TourGuideTest
             _output = output;
         }
 
-        public void Dispose()
-        {
-            _fixture.Cleanup();
-        }
 
         [Fact]
-        public async void GetUserLocation()
+        public async Task GetUserLocation()
         {
             _fixture.Initialize(0);
             var user = new User(Guid.NewGuid(), "jon", "000", "jon@tourGuide.com");
@@ -70,7 +66,7 @@ namespace TourGuideTest
         }
 
         [Fact]
-        public async void TrackUser()
+        public async Task TrackUser()
         {
             _fixture.Initialize();
             var user = new User(Guid.NewGuid(), "jon", "000", "jon@tourGuide.com");
@@ -82,7 +78,7 @@ namespace TourGuideTest
         }
 
         [Fact]
-        public async void GetNearbyAttractions()
+        public async Task GetNearbyAttractions()
         {
             _fixture.Initialize(0);
             var user = new User(Guid.NewGuid(), "jon", "000", "jon@tourGuide.com");

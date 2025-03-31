@@ -52,7 +52,7 @@ public class TourGuideService : ITourGuideService
         return user.VisitedLocations.Any() ? user.GetLastVisitedLocation() : await TrackUserLocation(user);
     }
 
-    public User GetUser(string userName)
+    public User? GetUser(string userName)
     {
         return _internalUserMap.ContainsKey(userName) ? _internalUserMap[userName] : null;
     }

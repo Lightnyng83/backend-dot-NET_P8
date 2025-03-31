@@ -6,7 +6,7 @@ namespace GpsUtil;
 public class GpsUtil
 {
     private static readonly SemaphoreSlim rateLimiter = new(1000, 1000);
-    private List<Attraction> _allAttractionsCache = null;
+    private List<Attraction> _allAttractionsCache = null!;
     private DateTime _allAttractionsCacheLastUpdated = DateTime.MinValue;
     private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(20);
     public VisitedLocation GetUserLocation(Guid userId)

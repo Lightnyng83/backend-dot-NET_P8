@@ -61,7 +61,7 @@ namespace TourGuideTest
         }
 
         [Fact]
-        public async void HighVolumeGetRewards()
+        public async Task HighVolumeGetRewards()
         {
             //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
             _fixture.Initialize(100000);

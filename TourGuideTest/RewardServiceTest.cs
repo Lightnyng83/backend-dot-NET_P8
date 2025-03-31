@@ -17,7 +17,7 @@ public class RewardServiceTest : IClassFixture<DependencyFixture>
     }
 
     [Fact]
-    public async void UserGetRewards()
+    public async Task UserGetRewards()
     {
         _fixture.Initialize(0);
         var user = new User(Guid.NewGuid(), "jon", "000", "jon@tourGuide.com");
@@ -31,7 +31,7 @@ public class RewardServiceTest : IClassFixture<DependencyFixture>
     }
 
     [Fact]
-    public async void IsWithinAttractionProximity()
+    public async Task IsWithinAttractionProximity()
     {
         var attractionList = await _fixture.GpsUtil.GetAttractions();
         var attraction = attractionList.First();
@@ -39,7 +39,7 @@ public class RewardServiceTest : IClassFixture<DependencyFixture>
     }
 
     [Fact]
-    public async void NearAllAttractions()
+    public async Task NearAllAttractions()
     {
         _fixture.Initialize(1);
         _fixture.RewardsService.SetProximityBuffer(int.MaxValue);

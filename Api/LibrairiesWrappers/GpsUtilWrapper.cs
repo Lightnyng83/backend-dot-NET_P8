@@ -6,7 +6,7 @@ namespace TourGuide.LibrairiesWrappers;
 public class GpsUtilWrapper : IGpsUtil
 {
     private readonly GpsUtil.GpsUtil _gpsUtil;
-    private List<Attraction> _allAttractionsCache = null;
+    private List<Attraction> _allAttractionsCache = null!;
     private DateTime _allAttractionsCacheLastUpdated = DateTime.MinValue;
     private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(20);
 
