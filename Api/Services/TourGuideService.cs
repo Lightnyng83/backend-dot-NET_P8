@@ -1,6 +1,4 @@
 ﻿using GpsUtil.Location;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using System.Globalization;
 using TourGuide.LibrairiesWrappers.Interfaces;
 using TourGuide.Services.Interfaces;
@@ -49,7 +47,7 @@ public class TourGuideService : ITourGuideService
         return user.UserRewards;
     }
 
-    public async  Task<VisitedLocation> GetUserLocation(User user)
+    public async Task<VisitedLocation> GetUserLocation(User user)
     {
         return user.VisitedLocations.Any() ? user.GetLastVisitedLocation() : await TrackUserLocation(user);
     }
@@ -100,7 +98,7 @@ public class TourGuideService : ITourGuideService
             .Select(a => new
             {
                 Attraction = a,
-                Distance = _rewardsService.GetDistance(visitedLocation.Location, a).Result
+                Distance = _rewardsService.GetDistance(visitedLocation.Location, a)
             })
             .OrderBy(x => x.Distance)
             .Take(5)

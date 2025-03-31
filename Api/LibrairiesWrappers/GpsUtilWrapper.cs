@@ -6,6 +6,9 @@ namespace TourGuide.LibrairiesWrappers;
 public class GpsUtilWrapper : IGpsUtil
 {
     private readonly GpsUtil.GpsUtil _gpsUtil;
+    private List<Attraction> _allAttractionsCache = null;
+    private DateTime _allAttractionsCacheLastUpdated = DateTime.MinValue;
+    private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(20);
 
     public GpsUtilWrapper()
     {
@@ -19,6 +22,14 @@ public class GpsUtilWrapper : IGpsUtil
 
     public async Task<List<Attraction>> GetAttractions()
     {
-        return await _gpsUtil.GetAttractions();
+        if (_allAttractionsCache == null || DateTime.UtcNow - _allAttractionsCacheLastUpdated > _cacheDuration)
+        {
+            _allAttractionsCache = await _gpsUtil.GetAttractions();
+            _allAttractionsCacheLastUpdated = DateTime.UtcNow;
+        }
+        return _allAttractionsCache;
     }
+
+
+
 }

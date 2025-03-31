@@ -1,23 +1,19 @@
-﻿using GpsUtil.Location;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TourGuide.Services;
-using TourGuide.Users;
-using TourGuide.Utilities;
+﻿using TourGuide.Users;
 using TripPricer;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace TourGuideTest
 {
     public class TourGuideServiceTour : IClassFixture<DependencyFixture>
     {
         private readonly DependencyFixture _fixture;
+        private readonly ITestOutputHelper _output;
 
-        public TourGuideServiceTour(DependencyFixture fixture)
+        public TourGuideServiceTour(DependencyFixture fixture,ITestOutputHelper output)
         {
             _fixture = fixture;
+            _output = output;
         }
 
         public void Dispose()

@@ -1,21 +1,19 @@
-﻿using GpsUtil.Location;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
+using GpsUtil.Location;
 using TourGuide.Users;
-using TourGuide.Utilities;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace TourGuideTest;
 
 public class RewardServiceTest : IClassFixture<DependencyFixture>
 {
     private readonly DependencyFixture _fixture;
-
-    public RewardServiceTest(DependencyFixture fixture)
+    private readonly ITestOutputHelper _output;
+    public RewardServiceTest(DependencyFixture fixture, ITestOutputHelper output)
     {
         _fixture = fixture;
+        _output = output;
     }
 
     [Fact]
@@ -24,7 +22,7 @@ public class RewardServiceTest : IClassFixture<DependencyFixture>
         _fixture.Initialize(0);
         var user = new User(Guid.NewGuid(), "jon", "000", "jon@tourGuide.com");
         var attractionList = await _fixture.GpsUtil.GetAttractions();
-        var attraction = attractionList.First(); 
+        var attraction = attractionList.First();
         await user.AddToVisitedLocations(new VisitedLocation(user.UserId, attraction, DateTime.Now));
         await _fixture.TourGuideService.TrackUserLocation(user);
         var userRewards = user.UserRewards;
@@ -50,8 +48,12 @@ public class RewardServiceTest : IClassFixture<DependencyFixture>
         await _fixture.RewardsService.CalculateRewards(user);
         var userRewards = _fixture.TourGuideService.GetUserRewards(user);
         _fixture.TourGuideService.Tracker.StopTracking();
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
         var attractionCount = await _fixture.GpsUtil.GetAttractions();
-        Assert.Equal(attractionCount.Count , userRewards.Count);
+        stopwatch.Stop();
+        _output.WriteLine($"{stopwatch.Elapsed} sec for GetAttraction ");
+        Assert.Equal(attractionCount.Count, userRewards.Count);
     }
 
 }

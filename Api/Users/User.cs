@@ -1,9 +1,5 @@
-﻿using System;
+﻿using GpsUtil.Location;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using GpsUtil.Location;
 using TripPricer;
 
 namespace TourGuide.Users

@@ -1,10 +1,5 @@
 ﻿using GpsUtil.Helpers;
 using GpsUtil.Location;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GpsUtil;
 
@@ -19,15 +14,15 @@ public class GpsUtil
         rateLimiter.Wait();
         try
         {
-           // Sleep();
+            // Sleep();
 
             double longitude = ThreadLocalRandom.NextDouble(-180.0, 180.0);
-            longitude =  Math.Round(longitude, 6);
+            longitude = Math.Round(longitude, 6);
 
             double latitude = ThreadLocalRandom.NextDouble(-90, 90);
             latitude = Math.Round(latitude, 6);
 
-            VisitedLocation visitedLocation =  new(userId, new Locations(latitude, longitude), DateTime.UtcNow);
+            VisitedLocation visitedLocation = new(userId, new Locations(latitude, longitude), DateTime.UtcNow);
 
             return visitedLocation;
         }
@@ -46,12 +41,10 @@ public class GpsUtil
         await rateLimiter.WaitAsync();
         try
         {
-            // Si le cache est vide ou expiré, le régénérer
-            if (_allAttractionsCache == null || DateTime.UtcNow - _allAttractionsCacheLastUpdated > _cacheDuration)
-            {
-                SleepLighter(); // Simule une latence si nécessaire
 
-                _allAttractionsCache = new List<Attraction>
+            SleepLighter(); // Simule une latence si nécessaire
+
+            _allAttractionsCache = new List<Attraction>
             {
                 new Attraction("Disneyland", "Anaheim", "CA", 33.817595, -117.922008),
                 new Attraction("Jackson Hole", "Jackson Hole", "WY", 43.582767, -110.821999),
@@ -81,8 +74,6 @@ public class GpsUtil
                 new Attraction("Cinderella Castle", "Orlando", "FL", 28.419411, -81.5812)
             };
 
-                _allAttractionsCacheLastUpdated = DateTime.UtcNow;
-            }
             return _allAttractionsCache;
         }
         finally

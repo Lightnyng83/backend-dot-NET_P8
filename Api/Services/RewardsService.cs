@@ -18,7 +18,7 @@ public class RewardsService : IRewardsService
     public RewardsService(IGpsUtil gpsUtil, IRewardCentral rewardCentral)
     {
         _gpsUtil = gpsUtil;
-        _rewardsCentral =rewardCentral;
+        _rewardsCentral = rewardCentral;
         _proximityBuffer = _defaultProximityBuffer;
     }
 
@@ -46,7 +46,7 @@ public class RewardsService : IRewardsService
                 bool alreadyRewarded = rewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName)
                                        || user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName);
 
-                if (!alreadyRewarded && await NearAttraction(visitedLocation, attraction))
+                if (!alreadyRewarded && NearAttraction(visitedLocation, attraction))
                 {
                     var reward = new UserReward(visitedLocation, attraction, GetRewardPoints(attraction, user));
                     rewards.Add(reward);
@@ -65,9 +65,9 @@ public class RewardsService : IRewardsService
         return true;
     }
 
-    private async Task<bool> NearAttraction(VisitedLocation visitedLocation, Attraction attraction)
+    private bool NearAttraction(VisitedLocation visitedLocation, Attraction attraction)
     {
-        double distance = await GetDistance(attraction, visitedLocation.Location);
+        double distance =  GetDistance(attraction, visitedLocation.Location);
         return distance <= _proximityBuffer;
     }
 
@@ -79,29 +79,25 @@ public class RewardsService : IRewardsService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur de récupération : {ex}" );
+            Console.WriteLine($"Erreur de récupération : {ex}");
             return 0;
         }
     }
 
 
-    public async Task<double> GetDistance(Locations loc1, Locations loc2)
+    public double GetDistance(Locations loc1, Locations loc2)
     {
-        const double R = 3958.8;
+        double lat1 = Math.PI * loc1.Latitude / 180.0;
+        double lon1 = Math.PI * loc1.Longitude / 180.0;
+        double lat2 = Math.PI * loc2.Latitude / 180.0;
+        double lon2 = Math.PI * loc2.Longitude / 180.0;
 
-        // Conversion des latitudes et longitudes en radians
-        double lat1 = loc1.Latitude * Math.PI / 180.0;
-        double lat2 = loc2.Latitude * Math.PI / 180.0;
-        double dLat = (loc2.Latitude - loc1.Latitude) * Math.PI / 180.0;
-        double dLon = (loc1.Longitude - loc2.Longitude) * Math.PI / 180.0;
+        double angle = Math.Acos(Math.Sin(lat1) * Math.Sin(lat2)
+                                 + Math.Cos(lat1) * Math.Cos(lat2) * Math.Cos(lon1 - lon2));
 
-        // Formule de Haversine
-        double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                   Math.Cos(lat1) * Math.Cos(lat2) *
-                   Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-        return await Task.FromResult(R * c);
+        double nauticalMiles = 60.0 * angle * 180.0 / Math.PI;
+        return StatuteMilesPerNauticalMile * nauticalMiles;
     }
 
-    
+
 }
